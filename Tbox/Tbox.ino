@@ -6,7 +6,7 @@
  * 3) GPIO0 'ESP8266'
  * 4) RST 'ESP8266'
  * 5) PWM 'servo el'
- * 6) TXpin 'Virtual Wire'
+ * 6) CMD 'HC-05'
  * 7) RX3 'HC-05'
  * 8) TX3 'HC-05'
  * 9) TX2 'GPS'
@@ -16,7 +16,7 @@
  * 13) LED
  * 14) SCLK
  * 15) 
- * 16) 
+ * 16) GPIO0 'ESP8266'
  * 17) 
  * 18) SDA0 I2C 'IMU'
  * 19) SCL0 I2C 'IMU'
@@ -55,6 +55,11 @@ Adafruit_SSD1306 display(OLED_RESET);
 Servo myservo;
 int pos = 0;
 
+#include <Encoder.h>
+Encoder myEnc(21, 22);
+long oldPosition  = -999;
+
+////////////////////////////////////////////////////////
 //IMU
 // The SFE_LSM9DS1 library requires both Wire and SPI be
 // included BEFORE including the 9DS1 library.
@@ -107,13 +112,13 @@ void setup()
   
 // USB serial
   Serial.begin(115200);
-  delay(1000);
+  delay(100);
   Serial.println("usb serial started");
-  delay(1000);
+  delay(100);
   Serial3.begin(115200);
-  delay(500);
+  delay(100);
   Serial3.println("BT serial started");
-  delay(500);
+  delay(100);
   MySerial.println("serial started...");
 
 //SSD1306 --------------------------------------------------------
@@ -126,7 +131,7 @@ void setup()
   // Since the buffer is intialized with an Adafruit splashscreen
   // internally, this will display the splashscreen.
   display.display();
-  delay(2000);
+  delay(100);
 
   // Clear the buffer.
   display.clearDisplay();
@@ -141,10 +146,7 @@ void setup()
 
   myservo.attach(5);
   myservo.write(93);
-  //myservo2.attach(6);
-  //myservo2.write(45);
-  //MySerial.println("servo started...");
-  
+    
 //IMU ---------------------------------------------------------  
 
   // Before initializing the IMU, there are a few settings
@@ -167,6 +169,7 @@ void setup()
     while (1)
       ;
   }
+  Wire.setClock(400000);
   MySerial.println("imu started...");
   calgyro();
   MySerial.println("recall_magcal");
@@ -180,7 +183,7 @@ void setup()
 //GPS -------------------------------------------------------
   #define Uart Serial2
   Serial2.begin(9600);
-  delay(1000);
+  delay(100);
   //MySerial.print("Testing TinyGPS library v. "); MySerial.println(TinyGPS::library_version());
   //MySerial.println("by Mikal Hart");
   //MySerial.println();
@@ -195,17 +198,13 @@ void setup()
   pinMode(2, OUTPUT);
   digitalWrite(2, LOW);  //set CE low
   Serial1.begin(115200);
-//  Serial1.setTimeout(5000);
+  //Serial1.setTimeout(5000);
 
   MySerial.println();
 
   //cipserver();
-
-
   
   //Ready ----------------------------------------------------
-  //MySerial.set_pos(3);
-  delay(100);
   MySerial.print("Ready:>");
 
 } //end setup
@@ -222,7 +221,7 @@ void loop()
   char incomingByte;
 //////////////////////////////////////////////////////////////////////////////  
 //Catch serial data from USB or HC-05  
-    if (MySerial.available ())
+    if (MySerial.available())
     {
       bytecount++;
       incomingByte = MySerial.read();
@@ -272,7 +271,7 @@ void loop()
         //MySerial.println(MySerial.cipnum);
         //if(espmsg.substring(0,4) == "+IPD") MySerial.setcipnum(0);
 
-        for(int j = 0; j<espmsg.length(); j++)
+        for(unsigned int j = 0; j<espmsg.length(); j++)
         {
           if(espmsg[j]==':' && espmsg[j+1]=='>') 
           {

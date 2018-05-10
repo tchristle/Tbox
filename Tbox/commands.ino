@@ -2,14 +2,12 @@ void command_lookup()
 {
   if (rcvstr == "gps") { GPS_update(); }
   else if (rcvstr == "test") { test(); }
-  else if (rcvstr == "gps2wifi") { gps2wifi(); }
-  else if (rcvstr == "telem2wifi") { telem2wifi(); }
   else if (rcvstr.substring(0,9) == "text2wifi") { text2wifi(); }
   else if (rcvstr == "latlon") { latlon(); }
-  else if (rcvstr == "getalt") { getalt(); }
-  else if (rcvstr == "getgpsrssi") { getgpsrssi(); }
-  else if (rcvstr == "sendgpsrssi") { sendgpsrssi(); }       
+  else if (rcvstr == "getalt") { getalt(); }      
   else if (rcvstr == "imu") { IMU(); }
+  else if (rcvstr == "lvl") { lvl(); }
+  else if (rcvstr == "enc") { enc(); }
   else if (rcvstr == "calgyro") { calgyro(); }
   else if (rcvstr == "mag") { magdata(); }
   else if (rcvstr == "tmp") { imutmp(); }
@@ -17,15 +15,16 @@ void command_lookup()
   else if (rcvstr == "calmag") { calmag(); }
   else if (rcvstr == "store_magcal") { store_magcal(); }
   else if (rcvstr == "recall_magcal") { recall_magcal(); }
-  else if (rcvstr.substring(0,2) == "wi") { ATCMD(); }
+  else if (rcvstr.substring(0,2) == "wi") { wi(); }
+  else if (rcvstr == "bt") { bt(); }
   else if (rcvstr == "espon") { en_esp(); }
+  else if (rcvstr == "esprst") { rst_esp(); }
   else if (rcvstr == "espcrnl") { espcrnl(); }
   else if (rcvstr == "fesp") { fesp(); }
-  else if (rcvstr == "cipserver") { cipserver(); }
-  else if (rcvstr == "webserver") { webserver(); }
-  else if (rcvstr == "srvhtml") { srvhtml(); }
+  else if (rcvstr == "b2e") { b2e(); }
+  else if (rcvstr == "u2e") { u2e(); }
+  else if (rcvstr == "showESPio") { showESPio(); }
   else if (rcvstr == "clr") { clr(); }
-  else if (rcvstr == "RSSI") { MySerial.println(); MySerial.println(getRSSI()); }
   else if (rcvstr.substring(0,2) == "az") { MySerial.println(); MySerial.println("moving"); Az(); }
   else if (rcvstr == "elscan") { MySerial.println(); MySerial.println("moving"); ElSCAN(); }
   else if (rcvstr.substring(0,3) == "el ") { MySerial.println(); MySerial.println("moving"); El(); }
@@ -38,15 +37,7 @@ void command_lookup()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void test()
 {
-  float lat1 = 44.79240;
-  float lon1 = -93.24369;
-
-  float lat2 = 44.79300;
-  float lon2 = -93.14400;
-
-  MySerial.println();
-  MySerial.println(getdist(lat1, lon1, lat2, lon2));
-  MySerial.println(findheading(lat1, lon1, lat2, lon2));
+  Serial.println("\ntest ok");
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void clr()
@@ -54,5 +45,60 @@ void clr()
   display.clearDisplay();
   display.display();
   display.setCursor(0,0);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void bt()
+{
+  pinMode(2, INPUT_PULLUP);
+  pinMode(6, OUTPUT);
+  digitalWrite(6, HIGH);
+
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.print("BT MASTER MODE");
+  display.display(); 
+  
+  while(digitalRead(2==HIGH)){
+    if (Serial.available() > 0) {
+      Serial3.write(Serial.read());
+    }
+    if (Serial3.available() > 0) {
+      Serial.write(Serial3.read());
+    }
+  }
+
+  pinMode(2, OUTPUT);
+  digitalWrite(2, HIGH);
+  display.clearDisplay();
+  display.display();
+  digitalWrite(6, LOW);
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void enc()
+{
+  while(MySerial.available()==0){
+    long newPosition = myEnc.read();
+    if (newPosition != oldPosition) {
+      oldPosition = newPosition;
+      Serial.println(newPosition);
+    }
+    
+    display.clearDisplay(); 
+    display.setCursor(0,0);
+    display.print(newPosition/4);
+    display.display();
+    
+    delay(50);
+  }
+  MySerial.println();
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void OLEDln(String txt)
+{
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.print(txt);
+  display.display();
 }
 

@@ -1,8 +1,9 @@
 //ESP8266 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-void ATCMD()
+void wi()
 {
   bool timeout = true;
+  MySerial.println();
   while(Serial1.available()>0) Serial1.read();
   //Serial1.println(rcvstr.substring(7,rcvstr.length()));
   Serial1.println(rcvstr.substring(2));
@@ -23,133 +24,30 @@ void espcrnl()
   MySerial.println();
   Serial1.println();
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////
-void gps2wifi()
-{
-  float flat, flon;
-  unsigned long age;
-  
-  MySerial.read();
-  while(MySerial.available()<1)  //break loop on keystroke
-  {
-    latlon();
-    gps.f_get_position(&flat, &flon, &age);
-    // it would make more sense to create the string fisrt then send number of known bytes
-    Serial1.println("AT+CIPSEND=0,23");
-    delay(500);
-    Serial1.print(flat, 6); Serial1.print(", "); Serial1.println(flon, 6);
-    delay(500);
-  }
-}
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-void telem2wifi()
-{
-  float flat, flon;
-  unsigned long age, date, time;
-  String telemetry;
-  int rssi;
-  bool newdata = false;
-  unsigned long start = millis();
-  
-  MySerial.read();
-  while(MySerial.available()<1)  //break loop on keystroke
-  {
-    while (millis() - start < 2000) {
-      if (Uart.available()) {
-        char c = Uart.read();
-        if (gps.encode(c)) {
-          newdata = true;
-          rssi = getRSSI();
-          // break;  // uncomment to print new data immediately!
-        }
-      }
-    }    
-    if(newdata)
-    {
-      gps.f_get_position(&flat, &flon, &age);
-      gps.get_datetime(&date, &time, &age);
-      imu.readGyro(); imu.readAccel(); imu.readMag();
-      telemetry = String(time,6) + " " + String(flat,6) + " " + String(flon,6) + " alt " + 
-      String(imu.ax) + " " + String(imu.ay) + " " + String(imu.az) + " " + 
-      String(imu.gx-gxbias) + " " + String(imu.gy-gybias) + " " + String(imu.gz-gzbias) + " " + 
-      String(int((imu.mx - mxoffset)*mxscale)) + " " + String(int((imu.my - myoffset)*mxscale)) + " " + String(imu.mz) + " " + 
-      String("temp") + String(" ") + String(rssi) + "\r\n";
-      Serial1.print("AT+CIPSEND=0,"); Serial1.println(telemetry.length());
-      delay(10);
-      Serial1.print(telemetry);
-    }
-    newdata = false;
-    start = millis();
-  }
-    
-}
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-void cipserver()
-{
-  Serial1.println("AT+CIPMUX=1");
-  delay(100);
-  Serial1.println("AT+CIPSERVER=1,23");
-  delay(100);
-  MySerial.println();
-}
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-void webserver()
-{
-  Serial1.println("AT+CIPMUX=1");
-  delay(100);
-  Serial1.println("AT+CIPSERVER=1,80");
-  delay(100);
-  MySerial.println();
-  webserveron = true;
-}
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-int getRSSI()
-{
-  String msg = "";
-  char ibyte;
-  int RSSI;
 
-  //clear ESP serial buffer
-  while(Serial1.available()>0) Serial1.read();
-  
-  Serial1.println("AT+CWJAP?");
-  elapsedMillis waiting;     // "waiting" starts at zero
-  while (waiting < 10) {
-    if (Serial1.available()) {
-      ibyte = Serial1.read();
-      msg += ibyte;
-    }
-  }
-  
-  RSSI = msg.substring(msg.length()-11,msg.length()-6).toInt();
-  if(msg.substring(0,5) == "No AP") RSSI = -200;
-    
-  return RSSI;
-}
-/////////////////////////////////////////////////////////////////////////////////////////////////
-void cipsend(String message)
-{
-  int lng = message.length();
-  //delay(100);
-  Serial1.print("AT+CIPSEND=0,"); Serial1.println(lng);
-  delay(100);
-  Serial1.print(message);
-  delay(150);
-  //Serial1.println();
-}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 void srvhtml()
 {
-  cipsend("HTTP/1.0 200 OK\r\n");
-  cipsend("\r\n");
-  cipsend("<HTML><BODY>");
-  cipsend("<h1>Hello World!</h1>");
-  cipsend("This is ESP8266. Lick my balls.");
-  cipsend("<form id=\"contact-form\" action=\"script.php\" method=\"post\">");
-  cipsend("<input type=\"text\" name=\"input-data\" id=\"input-data\" value=\"\" />");
+  //cipsend("HTTP/1.0 200 OK\r\n");
+  //cipsend("\r\n");
+  //cipsend("<HTML><BODY>");
+  //cipsend("<h1>Hello World!</h1>");
+  //cipsend("This is ESP8266. Lick my balls.");
+  //cipsend("<form id=\"contact-form\" action=\"script.php\" method=\"post\">");
+  //cipsend("<input type=\"text\" name=\"input-data\" id=\"input-data\" value=\"\" />");
   
-  cipsend("</HTML></BODY>");
-  Serial1.print("AT+CIPCLOSE="); Serial1.println(0);
+  //cipsend("</HTML></BODY>");
+  //Serial1.print("AT+CIPCLOSE="); Serial1.println(0);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -167,19 +65,30 @@ void text2wifi()
   Serial1.print(textmsg);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-void txt2wi(int con_num, String textmsg)
-{
-  Serial1.print("AT+CIPSEND="); Serial1.print(con_num); Serial1.print(","); Serial1.println(textmsg.length());
-  delay(50);
-  Serial1.println(textmsg);
-}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 void en_esp(){
+  pinMode(4, OUTPUT);
+  pinMode(2, OUTPUT);
   digitalWrite(4, HIGH);  //set RST high
   digitalWrite(2, HIGH);  //set CE high
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+void rst_esp(){
+  digitalWrite(4, LOW);  //set RST
+  delay(100);
+  digitalWrite(4, HIGH); 
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
 void fesp(){
+
+  en_esp();
+  pinMode(2, INPUT_PULLUP);
+
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.print("ESP8266 FLASH MODE");
+  display.display();  
   
   digitalWrite(3, LOW);  //set GPIO0
   delay(500);
@@ -190,15 +99,85 @@ void fesp(){
   digitalWrite(3, HIGH);  //boot serial
   delay(500);
   
-  while(1){
+  while(digitalRead(2==HIGH)){
     if (Serial.available() > 0) {
       Serial1.write(Serial.read());
     }
     if (Serial1.available() > 0) {
-      //Serial3.print(Serial1.read());
       Serial.write(Serial1.read());
     }
   }
+
+  pinMode(2, OUTPUT);
+  digitalWrite(2, HIGH);
+  display.clearDisplay();
+  display.display();
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+void b2e(){
+
+  en_esp();
+  pinMode(3, INPUT_PULLUP);
+
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.print("ESP8266<->HC-05");
+  display.display();  
+      
+  while(1){//digitalRead(3==HIGH)){
+    if (Serial3.available() > 0) {
+      Serial1.write(Serial3.read());
+    }
+    if (Serial1.available() > 0) {
+      Serial3.write(Serial1.read());
+    }
+  }
+
+  pinMode(2, OUTPUT);
+  digitalWrite(2, HIGH);
+  display.clearDisplay();
+  display.display();
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+void u2e(){
   
+  en_esp();
+  pinMode(2, INPUT_PULLUP);
+
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.print("ESP8266<->USB_ComPort");
+  display.display();  
+      
+  while(digitalRead(2==HIGH)){
+    if (Serial.available() > 0) {
+      Serial1.write(Serial.read());
+    }
+    if (Serial1.available() > 0) {
+      Serial.write(Serial1.read());
+    }
+  }
+
+  pinMode(2, OUTPUT);
+  digitalWrite(2, HIGH);
+  display.clearDisplay();
+  display.display();
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void showESPio()
+{
+  pinMode(16, INPUT_PULLUP);
+  pinMode(3, INPUT_PULLUP);
+  int GPIO0 = 0, GPIO2 = 0;
+  
+  while(MySerial.available()==0){
+    while (Serial1.available() > 0) MySerial.write(Serial1.read());
+    GPIO0 = digitalRead(16);
+    GPIO2 = digitalRead(3);
+    display.clearDisplay(); 
+    display.setCursor(0,0);
+    display.print("GPIO0 = "); display.print(GPIO0); display.print(", GPIO2 = "); display.print(GPIO2);
+    display.display();       
+  }
 }
 

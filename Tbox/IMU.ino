@@ -363,7 +363,7 @@ void telem2ser()
         char c = Uart.read();
         if (gps.encode(c)) {
           newdata = true;
-          RSSI = getRSSI();
+          RSSI = 0;
           // break;  // uncomment to print new data immediately!
         }
       }
@@ -387,9 +387,49 @@ void telem2ser()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 void imutmp()
 {
-  imu.readTemp();
+  int16_t tmp;
+  float f;
+  if (imu.tempAvailable())
+  {
+    imu.readTemp();
+    //tempReadCounter++;
+  }
+  //imu.readTemp();
   MySerial.println();
   MySerial.print("T: ");
-  MySerial.println(imu.temperature);
+  //MySerial.println(imu.temperature);
+  while(MySerial.available()==0){
+    Wire.beginTransmission(0x6B);
+    Wire.write(OUT_TEMP_L);
+    Wire.endTransmission(false);
+    Wire.requestFrom(0x6B, 1); // Read one byte from slave register address 
+    tmp = Wire.read(); // Fill Rx buffer with result
+    Wire.beginTransmission(0x6B);
+    Wire.write(OUT_TEMP_H);
+    Wire.endTransmission(false);
+    Wire.requestFrom(0x6B, 1); // Read one byte from slave register address 
+    tmp = Wire.read()*256 + tmp; // Fill Rx buffer with result
+    f = (float)tmp;
+    f = (f + 50)*9/10+32;    
+    tmp = (tmp + 50)*9/10+32;    
+    MySerial.println(f,3);
+    OLEDln(f);
+    delay(500);
+  }
 }
-
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void lvl()
+{
+  int px=64, py=32;
+  display.clearDisplay();
+  display.drawPixel(px,py, WHITE);
+  while(MySerial.available()==0){
+    imu.readAccel();
+    px=imu.ax/128+64;
+    py=imu.ay/256+32;
+    display.clearDisplay();
+    display.drawPixel(px, py, WHITE);
+    display.display();
+    delay(10);
+  }
+}
