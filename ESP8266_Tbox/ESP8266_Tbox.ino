@@ -46,8 +46,8 @@ const char* help = "? this menu \n\r"
   "setSTRT - startup function \n\r"
   "ver - version \n\r";
 
-const char* ssid = "NETGEAR11";
-const char* password = "niftypotato037";
+const char* ssid = "ssid";
+const char* password = "password";
 char* host = "192.168.4.1";
 String rIP = "192.168.1.1";
 String node_id_c;
